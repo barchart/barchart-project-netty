@@ -21,11 +21,12 @@ import io.netty.channel.ChannelPipeline;
 
 import java.io.IOException;
 import java.nio.channels.SelectableChannel;
+import java.nio.channels.SelectionKey;
 
 /**
  * {@link AbstractNioChannel} base class for {@link Channel}s that operate on messages.
  */
-abstract class AbstractNioMessageChannel extends AbstractNioChannel {
+public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
 
     /**
      * @see {@link AbstractNioChannel#AbstractNioChannel(Channel, Integer, SelectableChannel, int)}
@@ -44,11 +45,14 @@ abstract class AbstractNioMessageChannel extends AbstractNioChannel {
         @Override
         public void read() {
             assert eventLoop().inEventLoop();
+            final SelectionKey key = selectionKey();
+            key.interestOps(key.interestOps() & ~readInterestOp);
 
             final ChannelPipeline pipeline = pipeline();
             final MessageBuf<Object> msgBuf = pipeline.inboundMessageBuffer();
             boolean closed = false;
             boolean read = false;
+            boolean firedInboundBufferSuspended = false;
             try {
                 for (;;) {
                     int localReadAmount = doReadMessages(msgBuf);
@@ -66,16 +70,23 @@ abstract class AbstractNioMessageChannel extends AbstractNioChannel {
                     read = false;
                     pipeline.fireInboundBufferUpdated();
                 }
-                pipeline().fireExceptionCaught(t);
+
                 if (t instanceof IOException) {
-                    close(voidFuture());
+                    closed = true;
+                } else if (!closed) {
+                    firedInboundBufferSuspended = true;
+                    pipeline.fireInboundBufferSuspended();
                 }
+
+                pipeline().fireExceptionCaught(t);
             } finally {
                 if (read) {
                     pipeline.fireInboundBufferUpdated();
                 }
                 if (closed && isOpen()) {
                     close(voidFuture());
+                } else if (!firedInboundBufferSuspended) {
+                    pipeline.fireInboundBufferSuspended();
                 }
             }
         }

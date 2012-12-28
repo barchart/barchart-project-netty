@@ -16,12 +16,13 @@
 package io.netty.handler.codec;
 
 import io.netty.buffer.MessageBuf;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundMessageHandler;
 import io.netty.channel.ChannelOutboundMessageHandlerAdapter;
 import io.netty.channel.ChannelHandlerUtil;
 import io.netty.channel.ChannelPipeline;
+import io.netty.channel.ChannelPromise;
+import io.netty.channel.PartialFlushException;
 
 /**
  * {@link ChannelOutboundMessageHandlerAdapter} which encodes from one message to an other message
@@ -42,6 +43,7 @@ import io.netty.channel.ChannelPipeline;
  *         }
  *     }
  * </pre>
+ *
  */
 public abstract class MessageToMessageEncoder<I, O> extends ChannelOutboundMessageHandlerAdapter<I> {
 
@@ -56,8 +58,10 @@ public abstract class MessageToMessageEncoder<I, O> extends ChannelOutboundMessa
     }
 
     @Override
-    public void flush(ChannelHandlerContext ctx, ChannelFuture future) throws Exception {
+    public void flush(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
         MessageBuf<I> in = ctx.outboundMessageBuffer();
+        boolean encoded = false;
+
         for (;;) {
             try {
                 Object msg = in.poll();
@@ -72,24 +76,39 @@ public abstract class MessageToMessageEncoder<I, O> extends ChannelOutboundMessa
 
                 @SuppressWarnings("unchecked")
                 I imsg = (I) msg;
-                O omsg = encode(ctx, imsg);
-                if (omsg == null) {
-                    // encode() might be waiting for more inbound messages to generate
-                    // an aggregated message - keep polling.
-                    continue;
+                boolean free = true;
+                try {
+                    O omsg = encode(ctx, imsg);
+                    if (omsg == null) {
+                        // encode() might be waiting for more inbound messages to generate
+                        // an aggregated message - keep polling.
+                        continue;
+                    }
+                    if (omsg == imsg) {
+                        free = false;
+                    }
+                    encoded = true;
+                    ChannelHandlerUtil.unfoldAndAdd(ctx, omsg, false);
+                } finally {
+                    if (free) {
+                        freeInboundMessage(imsg);
+                    }
                 }
-
-                ChannelHandlerUtil.unfoldAndAdd(ctx, omsg, false);
             } catch (Throwable t) {
+                Throwable cause;
                 if (t instanceof CodecException) {
-                    ctx.fireExceptionCaught(t);
+                    cause = t;
                 } else {
-                    ctx.fireExceptionCaught(new EncoderException(t));
+                    cause = new EncoderException(t);
                 }
+                if (encoded) {
+                    cause = new PartialFlushException("Unable to encoded all messages", cause);
+                }
+                promise.setFailure(cause);
+                return;
             }
         }
-
-        ctx.flush(future);
+        ctx.flush(promise);
     }
 
     /**
@@ -112,4 +131,13 @@ public abstract class MessageToMessageEncoder<I, O> extends ChannelOutboundMessa
      * @throws Exception    is thrown if an error accour
      */
     protected abstract O encode(ChannelHandlerContext ctx, I msg) throws Exception;
+
+    /**
+     * Is called after a message was processed via {@link #encode(ChannelHandlerContext, Object)} to free
+     * up any resources that is held by the inbound message. You may want to override this if your implementation
+     * just pass-through the input message or need it for later usage.
+     */
+    protected void freeInboundMessage(I msg) throws Exception {
+        ChannelHandlerUtil.freeMessage(msg);
+    }
 }

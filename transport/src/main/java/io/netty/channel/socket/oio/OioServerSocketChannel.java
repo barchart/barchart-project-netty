@@ -108,7 +108,7 @@ public class OioServerSocketChannel extends AbstractOioMessageChannel
         }
 
         this.socket = socket;
-        config = new DefaultServerSocketChannelConfig(socket);
+        config = new DefaultServerSocketChannelConfig(this, socket);
     }
 
     @Override
@@ -155,15 +155,6 @@ public class OioServerSocketChannel extends AbstractOioMessageChannel
     protected int doReadMessages(MessageBuf<Object> buf) throws Exception {
         if (socket.isClosed()) {
             return -1;
-        }
-
-        if (readSuspended) {
-            try {
-                Thread.sleep(SO_TIMEOUT);
-            } catch (InterruptedException e) {
-                // ignore
-            }
-            return 0;
         }
 
         Socket s = null;
