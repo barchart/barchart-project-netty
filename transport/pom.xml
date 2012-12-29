@@ -44,14 +44,6 @@
       <optional>true</optional>
     </dependency>
 
-    <!-- netty logging handler for tests -->
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-handler</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-
     <!-- yammer metrics for benchmarks -->
       <dependency>
       <groupId>com.yammer.metrics</groupId>
