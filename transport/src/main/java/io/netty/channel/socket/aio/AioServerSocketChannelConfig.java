@@ -22,7 +22,7 @@ import io.netty.channel.ChannelException;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.DefaultChannelConfig;
 import io.netty.channel.socket.ServerSocketChannelConfig;
-import io.netty.util.NetworkConstants;
+import io.netty.util.NetUtil;
 
 import java.io.IOException;
 import java.net.SocketOption;
@@ -40,7 +40,7 @@ final class AioServerSocketChannelConfig extends DefaultChannelConfig
 
     private final AtomicReference<AsynchronousServerSocketChannel> channel
             = new AtomicReference<AsynchronousServerSocketChannel>();
-    private volatile int backlog = NetworkConstants.SOMAXCONN;
+    private volatile int backlog = NetUtil.SOMAXCONN;
     private Map<SocketOption<?>, Object> options = new ConcurrentHashMap<SocketOption<?>, Object>();
     private static final int DEFAULT_SND_BUF_SIZE = 32 * 1024;
     private static final boolean DEFAULT_SO_REUSEADDR = false;
