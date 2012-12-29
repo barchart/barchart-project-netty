@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 The Netty Project
+ * Copyright 2012 The Netty Project
  *
  * The Netty Project licenses this file to you under the Apache License,
  * version 2.0 (the "License"); you may not use this file except in compliance
@@ -16,9 +16,12 @@
 package io.netty.channel.socket;
 
 import io.netty.channel.Channel;
+import io.netty.channel.socket.nio.NioUdtProvider;
 
 /**
- * Netty UDT {@link Channel}
+ * Netty UDT {@link Channel}.
+ * <p>
+ * Supported UDT {@link UdtChannel} are available via {@link NioUdtProvider}
  */
 public interface UdtChannel extends Channel {
 
