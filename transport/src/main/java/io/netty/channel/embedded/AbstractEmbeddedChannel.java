@@ -23,13 +23,13 @@ import io.netty.channel.AbstractChannel;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelConfig;
 import io.netty.channel.ChannelException;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandler;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelOutboundHandler;
 import io.netty.channel.ChannelPipeline;
+import io.netty.channel.ChannelPromise;
 import io.netty.channel.DefaultChannelConfig;
 import io.netty.channel.EventLoop;
 import io.netty.logging.InternalLogger;
@@ -234,6 +234,11 @@ public abstract class AbstractEmbeddedChannel<O> extends AbstractChannel {
     }
 
     @Override
+    protected void doBeginRead() throws Exception {
+        // NOOP
+    }
+
+    @Override
     protected AbstractUnsafe newUnsafe() {
         return new DefaultUnsafe();
     }
@@ -314,18 +319,8 @@ public abstract class AbstractEmbeddedChannel<O> extends AbstractChannel {
     private class DefaultUnsafe extends AbstractUnsafe {
         @Override
         public void connect(SocketAddress remoteAddress,
-                SocketAddress localAddress, ChannelFuture future) {
-            future.setSuccess();
-        }
-
-        @Override
-        public void suspendRead() {
-            // NOOP
-        }
-
-        @Override
-        public void resumeRead() {
-            // NOOP
+                SocketAddress localAddress, ChannelPromise promise) {
+            promise.setSuccess();
         }
     }
 

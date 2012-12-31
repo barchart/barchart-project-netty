@@ -15,28 +15,24 @@
  */
 package io.netty.channel;
 
-import io.netty.channel.ChannelFlushFutureNotifier.FlushCheckpoint;
+import io.netty.channel.ChannelFlushPromiseNotifier.FlushCheckpoint;
 import io.netty.logging.InternalLogger;
 import io.netty.logging.InternalLoggerFactory;
 
-import java.nio.channels.Channels;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import static java.util.concurrent.TimeUnit.*;
 
 /**
- * The default {@link ChannelFuture} implementation.  It is recommended to use {@link Channel#newFuture()} to create
- * a new {@link ChannelFuture} rather than calling the constructor explicitly.
+ * The default {@link ChannelPromise} implementation.  It is recommended to use {@link Channel#newPromise()} to create
+ * a new {@link ChannelPromise} rather than calling the constructor explicitly.
  */
-public class DefaultChannelFuture extends FlushCheckpoint implements ChannelFuture {
+public class DefaultChannelPromise extends FlushCheckpoint implements ChannelPromise {
 
     private static final InternalLogger logger =
-        InternalLoggerFactory.getInstance(DefaultChannelFuture.class);
+        InternalLoggerFactory.getInstance(DefaultChannelPromise.class);
 
     private static final int MAX_LISTENER_STACK_DEPTH = 8;
     private static final ThreadLocal<Integer> LISTENER_STACK_DEPTH = new ThreadLocal<Integer>() {
@@ -46,14 +42,10 @@ public class DefaultChannelFuture extends FlushCheckpoint implements ChannelFutu
         }
     };
 
-    private static final Throwable CANCELLED = new Throwable();
-
     private final Channel channel;
-    private final boolean cancellable;
 
     private ChannelFutureListener firstListener;
     private List<ChannelFutureListener> otherListeners;
-    private List<ChannelFutureProgressListener> progressListeners;
     private boolean done;
     private Throwable cause;
     private int waiters;
@@ -68,12 +60,9 @@ public class DefaultChannelFuture extends FlushCheckpoint implements ChannelFutu
      *
      * @param channel
      *        the {@link Channel} associated with this future
-     * @param cancellable
-     *        {@code true} if and only if this future can be canceled
      */
-    public DefaultChannelFuture(Channel channel, boolean cancellable) {
+    public DefaultChannelPromise(Channel channel) {
         this.channel = channel;
-        this.cancellable = cancellable;
     }
 
     @Override
@@ -93,20 +82,11 @@ public class DefaultChannelFuture extends FlushCheckpoint implements ChannelFutu
 
     @Override
     public synchronized Throwable cause() {
-        if (cause != CANCELLED) {
-            return cause;
-        } else {
-            return null;
-        }
+        return cause;
     }
 
     @Override
-    public synchronized boolean isCancelled() {
-        return cause == CANCELLED;
-    }
-
-    @Override
-    public ChannelFuture addListener(final ChannelFutureListener listener) {
+    public ChannelPromise addListener(final ChannelFutureListener listener) {
         if (listener == null) {
             throw new NullPointerException("listener");
         }
@@ -124,13 +104,6 @@ public class DefaultChannelFuture extends FlushCheckpoint implements ChannelFutu
                     }
                     otherListeners.add(listener);
                 }
-
-                if (listener instanceof ChannelFutureProgressListener) {
-                    if (progressListeners == null) {
-                        progressListeners = new ArrayList<ChannelFutureProgressListener>(1);
-                    }
-                    progressListeners.add((ChannelFutureProgressListener) listener);
-                }
             }
         }
 
@@ -142,7 +115,7 @@ public class DefaultChannelFuture extends FlushCheckpoint implements ChannelFutu
     }
 
     @Override
-    public ChannelFuture addListeners(ChannelFutureListener... listeners) {
+    public ChannelPromise addListeners(ChannelFutureListener... listeners) {
         if (listeners == null) {
             throw new NullPointerException("listeners");
         }
@@ -157,7 +130,7 @@ public class DefaultChannelFuture extends FlushCheckpoint implements ChannelFutu
     }
 
     @Override
-    public ChannelFuture removeListener(ChannelFutureListener listener) {
+    public ChannelPromise removeListener(ChannelFutureListener listener) {
         if (listener == null) {
             throw new NullPointerException("listener");
         }
@@ -173,10 +146,6 @@ public class DefaultChannelFuture extends FlushCheckpoint implements ChannelFutu
                 } else if (otherListeners != null) {
                     otherListeners.remove(listener);
                 }
-
-                if (listener instanceof ChannelFutureProgressListener) {
-                    progressListeners.remove(listener);
-                }
             }
         }
 
@@ -184,7 +153,7 @@ public class DefaultChannelFuture extends FlushCheckpoint implements ChannelFutu
     }
 
     @Override
-    public ChannelFuture removeListeners(ChannelFutureListener... listeners) {
+    public ChannelPromise removeListeners(ChannelFutureListener... listeners) {
         if (listeners == null) {
             throw new NullPointerException("listeners");
         }
@@ -199,43 +168,17 @@ public class DefaultChannelFuture extends FlushCheckpoint implements ChannelFutu
     }
 
     @Override
-    public ChannelFuture sync() throws InterruptedException {
+    public ChannelPromise sync() throws InterruptedException {
         await();
         rethrowIfFailed();
         return this;
     }
 
     @Override
-    public ChannelFuture syncUninterruptibly() {
+    public ChannelPromise syncUninterruptibly() {
         awaitUninterruptibly();
         rethrowIfFailed();
         return this;
-    }
-
-    @Override
-    public Void get() throws InterruptedException, ExecutionException {
-        await();
-        Throwable cause = cause();
-        if (cause == null) {
-            return null;
-        } else {
-            throw new ExecutionException(cause);
-        }
-    }
-
-    @Override
-    public Void get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException,
-            TimeoutException {
-        if (!await(timeout, unit)) {
-            throw new TimeoutException();
-        }
-
-        Throwable cause = cause();
-        if (cause == null) {
-            return null;
-        } else {
-            throw new ExecutionException(cause);
-        }
     }
 
     private void rethrowIfFailed() {
@@ -256,7 +199,7 @@ public class DefaultChannelFuture extends FlushCheckpoint implements ChannelFutu
     }
 
     @Override
-    public ChannelFuture await() throws InterruptedException {
+    public ChannelPromise await() throws InterruptedException {
         if (Thread.interrupted()) {
             throw new InterruptedException();
         }
@@ -287,7 +230,7 @@ public class DefaultChannelFuture extends FlushCheckpoint implements ChannelFutu
     }
 
     @Override
-    public ChannelFuture awaitUninterruptibly() {
+    public ChannelPromise awaitUninterruptibly() {
         boolean interrupted = false;
         synchronized (this) {
             while (!done) {
@@ -384,68 +327,66 @@ public class DefaultChannelFuture extends FlushCheckpoint implements ChannelFutu
     }
 
     @Override
-    public boolean setSuccess() {
-        synchronized (this) {
-            // Allow only once.
-            if (done) {
-                return false;
-            }
-
-            done = true;
-            if (waiters > 0) {
-                notifyAll();
-            }
+    public void setSuccess() {
+        if (success0()) {
+            notifyListeners();
+            return;
         }
-
-        notifyListeners();
-        return true;
+        throw new IllegalStateException();
     }
 
     @Override
-    public boolean setFailure(Throwable cause) {
-        synchronized (this) {
-            // Allow only once.
-            if (done) {
-                return false;
-            }
-
-            this.cause = cause;
-            done = true;
-            if (waiters > 0) {
-                notifyAll();
-            }
+    public boolean trySuccess() {
+        if (success0()) {
+            notifyListeners();
+            return true;
         }
-
-        notifyListeners();
-        return true;
+        return false;
     }
 
-    @Override
-    public boolean cancel() {
-        if (!cancellable) {
+    private synchronized boolean success0() {
+        // Allow only once.
+        if (done) {
             return false;
         }
 
-        synchronized (this) {
-            // Allow only once.
-            if (done) {
-                return false;
-            }
-
-            cause = CANCELLED;
-            done = true;
-            if (waiters > 0) {
-                notifyAll();
-            }
+        done = true;
+        if (waiters > 0) {
+            notifyAll();
         }
-
-        notifyListeners();
         return true;
     }
 
     @Override
-    public boolean cancel(boolean mayInterruptIfRunning) {
-        return cancel();
+    public void setFailure(Throwable cause) {
+        if (failure0(cause)) {
+            notifyListeners();
+            return;
+        }
+        throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean tryFailure(Throwable cause) {
+        if (failure0(cause)) {
+            notifyListeners();
+            return true;
+        }
+        return false;
+    }
+
+    private synchronized boolean failure0(Throwable cause) {
+        // Allow only once.
+        if (done) {
+            return false;
+        }
+
+        this.cause = cause;
+        done = true;
+        if (waiters > 0) {
+            notifyAll();
+        }
+        return true;
     }
 
     private void notifyListeners() {
@@ -477,10 +418,10 @@ public class DefaultChannelFuture extends FlushCheckpoint implements ChannelFutu
             channel().eventLoop().execute(new Runnable() {
                 @Override
                 public void run() {
-                    notifyListener0(DefaultChannelFuture.this, firstListener);
+                    notifyListener0(DefaultChannelPromise.this, firstListener);
                     if (otherListeners != null) {
                         for (ChannelFutureListener l: otherListeners) {
-                            notifyListener0(DefaultChannelFuture.this, l);
+                            notifyListener0(DefaultChannelPromise.this, l);
                         }
                     }
                 }
@@ -524,48 +465,6 @@ public class DefaultChannelFuture extends FlushCheckpoint implements ChannelFutu
     }
 
     @Override
-    public boolean setProgress(long amount, long current, long total) {
-        ChannelFutureProgressListener[] plisteners;
-        synchronized (this) {
-            // Do not generate progress event after completion.
-            if (done) {
-                return false;
-            }
-
-            Collection<ChannelFutureProgressListener> progressListeners =
-                this.progressListeners;
-            if (progressListeners == null || progressListeners.isEmpty()) {
-                // Nothing to notify - no need to create an empty array.
-                return true;
-            }
-
-            plisteners = progressListeners.toArray(
-                    new ChannelFutureProgressListener[progressListeners.size()]);
-        }
-
-        for (ChannelFutureProgressListener pl: plisteners) {
-            notifyProgressListener(pl, amount, current, total);
-        }
-
-        return true;
-    }
-
-    private void notifyProgressListener(
-            ChannelFutureProgressListener l,
-            long amount, long current, long total) {
-
-        try {
-            l.operationProgressed(this, amount, current, total);
-        } catch (Throwable t) {
-            if (logger.isWarnEnabled()) {
-                logger.warn(
-                        "An exception was thrown by " +
-                        ChannelFutureProgressListener.class.getSimpleName() + '.', t);
-            }
-        }
-    }
-
-    @Override
     long flushCheckpoint() {
         return flushCheckpoint;
     }
@@ -576,7 +475,7 @@ public class DefaultChannelFuture extends FlushCheckpoint implements ChannelFutu
     }
 
     @Override
-    ChannelFuture future() {
+    ChannelPromise future() {
         return this;
     }
 }

@@ -21,7 +21,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.MessageBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundByteHandler;
@@ -30,6 +29,7 @@ import io.netty.channel.ChannelInboundMessageHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOutboundByteHandler;
 import io.netty.channel.ChannelOutboundMessageHandler;
+import io.netty.channel.ChannelPromise;
 import io.netty.channel.DefaultEventExecutorGroup;
 import io.netty.channel.EventExecutorGroup;
 import io.netty.channel.EventLoopGroup;
@@ -367,8 +367,13 @@ public class LocalTransportThreadModelTest {
         }
 
         @Override
+        public void read(ChannelHandlerContext ctx) {
+            ctx.read();
+        }
+
+        @Override
         public void flush(ChannelHandlerContext ctx,
-                ChannelFuture future) throws Exception {
+                          ChannelPromise future) throws Exception {
             ctx.outboundMessageBuffer().clear();
             outboundThreadNames.add(Thread.currentThread().getName());
             ctx.flush(future);
@@ -447,8 +452,13 @@ public class LocalTransportThreadModelTest {
         }
 
         @Override
+        public void read(ChannelHandlerContext ctx) {
+            ctx.read();
+        }
+
+        @Override
         public void flush(ChannelHandlerContext ctx,
-                ChannelFuture future) throws Exception {
+                ChannelPromise future) throws Exception {
             Assert.assertSame(t, Thread.currentThread());
 
             // Don't let the write request go to the server-side channel - just swallow.
@@ -538,8 +548,13 @@ public class LocalTransportThreadModelTest {
         }
 
         @Override
+        public void read(ChannelHandlerContext ctx) {
+            ctx.read();
+        }
+
+        @Override
         public void flush(final ChannelHandlerContext ctx,
-                ChannelFuture future) throws Exception {
+                ChannelPromise future) throws Exception {
             Assert.assertSame(t, Thread.currentThread());
 
             MessageBuf<Integer> in = ctx.outboundMessageBuffer();
@@ -631,8 +646,13 @@ public class LocalTransportThreadModelTest {
         }
 
         @Override
+        public void read(ChannelHandlerContext ctx) {
+            ctx.read();
+        }
+
+        @Override
         public void flush(ChannelHandlerContext ctx,
-                ChannelFuture future) throws Exception {
+                ChannelPromise future) throws Exception {
             Assert.assertSame(t, Thread.currentThread());
 
             MessageBuf<Object> in = ctx.outboundMessageBuffer();
@@ -712,8 +732,13 @@ public class LocalTransportThreadModelTest {
         }
 
         @Override
+        public void read(ChannelHandlerContext ctx) {
+            ctx.read();
+        }
+
+        @Override
         public void flush(ChannelHandlerContext ctx,
-                ChannelFuture future) throws Exception {
+                ChannelPromise future) throws Exception {
             Assert.assertSame(t, Thread.currentThread());
 
             MessageBuf<Object> in = ctx.outboundMessageBuffer();
