@@ -23,43 +23,46 @@
     <version>4.0.0.Beta1-SNAPSHOT</version>
   </parent>
 
-  <artifactId>netty-transport</artifactId>
+  <artifactId>netty-transport-sctp</artifactId>
   <packaging>jar</packaging>
 
-  <name>Netty/Transport</name>
+  <name>Netty/SCTP Transport</name>
 
   <dependencies>
-  
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>netty-buffer</artifactId>
       <version>${project.version}</version>
     </dependency>
-    
-    <!-- optional udt transport -->
-    <dependency>
-      <groupId>com.barchart.udt</groupId>
-      <artifactId>barchart-udt-bundle</artifactId>
-      <version>2.2.0-SNAPSHOT</version>
-      <optional>true</optional>
-    </dependency>
-
-    <!-- netty logging handler for tests -->
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-handler</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <!-- yammer metrics for benchmarks -->
       <dependency>
-      <groupId>com.yammer.metrics</groupId>
-      <artifactId>metrics-core</artifactId>
-      <scope>test</scope>
+          <groupId>${project.groupId}</groupId>
+          <artifactId>netty-codec</artifactId>
+          <version>${project.version}</version>
+      </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>netty-transport</artifactId>
+      <version>${project.version}</version>
     </dependency>
-
   </dependencies>
+
+  <build>
+    <plugins>
+    
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <excludes>
+            <!-- dont want to include com.sun in here -->
+            <exclude>com/**</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+      
+    </plugins>
+  
+  </build>
   
 </project>
 
