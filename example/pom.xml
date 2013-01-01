@@ -62,10 +62,11 @@
             <version>2.2.0-SNAPSHOT</version>
         </dependency>
 
-		<!-- use yammer metrics for benchmarks -->
+		<!-- netty yammer metrics for benchmarks -->
 		<dependency>
-			<groupId>com.yammer.metrics</groupId>
-			<artifactId>metrics-core</artifactId>
+			<groupId>io.netty</groupId>
+			<artifactId>netty-metrics-yammer</artifactId>
+            <version>${project.version}</version>
 		</dependency>
         
     </dependencies>

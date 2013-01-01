@@ -42,20 +42,21 @@ public class ByteEchoClientHandler extends ChannelInboundByteHandlerAdapter {
 
     private final ByteBuf message;
 
+    final Meter meter = Metrics.newMeter(ByteEchoClientHandler.class, "rate",
+            "bytes", TimeUnit.SECONDS);
+
     public ByteEchoClientHandler(final int messageSize) {
         message = Unpooled.buffer(messageSize);
+
         for (int i = 0; i < message.capacity(); i++) {
             message.writeByte((byte) i);
         }
     }
 
-    final Meter meter = Metrics.newMeter(ByteEchoClientHandler.class, "rate",
-            "bytes", TimeUnit.SECONDS);
-
     @Override
     public void channelActive(final ChannelHandlerContext ctx) throws Exception {
-        log.info("ECHO active {}", //
-                NioUdtProvider.socketUDT(ctx.channel()).toStringOptions());
+        log.info("ECHO active {}", NioUdtProvider.socketUDT(ctx.channel())
+                .toStringOptions());
         ctx.write(message);
     }
 

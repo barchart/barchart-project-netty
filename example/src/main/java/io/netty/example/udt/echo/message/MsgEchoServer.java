@@ -34,13 +34,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * UDT STREAM server
+ * UDT Message Flow Server
  * <p>
  * Echoes back any received data from a client.
  */
 public class MsgEchoServer {
 
-    static Logger log = LoggerFactory.getLogger(MsgEchoServer.class);
+    private static final Logger log = LoggerFactory
+            .getLogger(MsgEchoServer.class);
 
     /**
      * use slf4j provider for io.netty.logging.InternalLogger
@@ -61,10 +62,10 @@ public class MsgEchoServer {
     public void run() throws Exception {
         final ThreadFactory acceptFactory = new ThreadFactoryUDT("accept");
         final ThreadFactory connectFactory = new ThreadFactoryUDT("connect");
-        final NioEventLoopGroup acceptGroup = new NioEventLoopGroup(//
-                1, acceptFactory, NioUdtProvider.MESSAGE_PROVIDER);
-        final NioEventLoopGroup connectGroup = new NioEventLoopGroup(//
-                1, connectFactory, NioUdtProvider.MESSAGE_PROVIDER);
+        final NioEventLoopGroup acceptGroup = new NioEventLoopGroup(1,
+                acceptFactory, NioUdtProvider.MESSAGE_PROVIDER);
+        final NioEventLoopGroup connectGroup = new NioEventLoopGroup(1,
+                connectFactory, NioUdtProvider.MESSAGE_PROVIDER);
         // Configure the server.
         final ServerBootstrap boot = new ServerBootstrap();
         try {
@@ -94,8 +95,11 @@ public class MsgEchoServer {
 
     public static void main(final String[] args) throws Exception {
         log.info("init");
+
         final int port = 1234;
+
         new MsgEchoServer(port).run();
+
         log.info("done");
     }
 

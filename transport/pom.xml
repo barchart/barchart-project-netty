@@ -44,13 +44,6 @@
       <optional>true</optional>
     </dependency>
 
-    <!-- yammer metrics for benchmarks -->
-      <dependency>
-      <groupId>com.yammer.metrics</groupId>
-      <artifactId>metrics-core</artifactId>
-      <scope>test</scope>
-    </dependency>
-
   </dependencies>
 
   <build>

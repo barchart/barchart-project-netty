@@ -36,7 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * UDT STREAM client
+ * UDT Byte Stream Client
  * <p>
  * Sends one message when a connection is open and echoes back any received data
  * to the server. Simply put, the echo client initiates the ping-pong traffic
@@ -45,7 +45,8 @@ import org.slf4j.LoggerFactory;
  */
 public class ByteEchoClient {
 
-    static Logger log = LoggerFactory.getLogger(ByteEchoClient.class);
+    private static final Logger log = LoggerFactory
+            .getLogger(ByteEchoClient.class);
 
     /**
      * use slf4j provider for io.netty.logging.InternalLogger
@@ -72,8 +73,8 @@ public class ByteEchoClient {
         // Configure the client.
         final Bootstrap boot = new Bootstrap();
         final ThreadFactory connectFactory = new ThreadFactoryUDT("connect");
-        final NioEventLoopGroup connectGroup = new NioEventLoopGroup(//
-                1, connectFactory, NioUdtProvider.BYTE_PROVIDER);
+        final NioEventLoopGroup connectGroup = new NioEventLoopGroup(1,
+                connectFactory, NioUdtProvider.BYTE_PROVIDER);
         try {
             boot.group(connectGroup)
                     .channelFactory(NioUdtProvider.BYTE_CONNECTOR)
@@ -100,11 +101,17 @@ public class ByteEchoClient {
 
     public static void main(final String[] args) throws Exception {
         log.info("init");
+
+        // client is reporting metrics
         ConsoleReporterUDT.enable(3, TimeUnit.SECONDS);
+
         final String host = "localhost";
         final int port = 1234;
+
         final int messageSize = 64 * 1024;
+
         new ByteEchoClient(host, port, messageSize).run();
+
         log.info("done");
     }
 
