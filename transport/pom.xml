@@ -29,13 +29,11 @@
   <name>Netty/Transport</name>
 
   <dependencies>
-  
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>netty-buffer</artifactId>
       <version>${project.version}</version>
     </dependency>
-    
   </dependencies>
 
   <build>

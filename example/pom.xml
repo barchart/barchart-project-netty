@@ -63,18 +63,18 @@
             <version>${project.version}</version>
         </dependency>
 
-		<!-- netty yammer metrics for benchmarks -->
-		<dependency>
-			<groupId>io.netty</groupId>
-			<artifactId>netty-metrics-yammer</artifactId>
+        <!-- netty yammer metrics for benchmarks -->
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-metrics-yammer</artifactId>
             <version>${project.version}</version>
-		</dependency>
-		<!-- yammer metrics version free of bugs; see https://github.com/netty/netty/issues/874 -->
-		<dependency>
-			<groupId>com.yammer.metrics</groupId>
-			<artifactId>metrics-core</artifactId>
-			<version>2.2.0</version>
-		</dependency>
+        </dependency>
+        <!-- yammer metrics version free of bugs; see https://github.com/netty/netty/issues/874 -->
+        <dependency>
+            <groupId>com.yammer.metrics</groupId>
+            <artifactId>metrics-core</artifactId>
+            <version>2.2.0</version>
+        </dependency>
         
     </dependencies>
     
