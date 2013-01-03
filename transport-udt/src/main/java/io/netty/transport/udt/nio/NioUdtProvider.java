@@ -13,12 +13,12 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package io.netty.channel.socket.nio;
+package io.netty.transport.udt.nio;
 
 import io.netty.bootstrap.AbstractBootstrap.ChannelFactory;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelException;
-import io.netty.channel.socket.UdtChannel;
+import io.netty.transport.udt.UdtChannel;
 
 import java.io.IOException;
 import java.nio.channels.spi.SelectorProvider;
@@ -33,11 +33,11 @@ import com.barchart.udt.nio.ServerSocketChannelUDT;
 import com.barchart.udt.nio.SocketChannelUDT;
 
 /**
- * Netty UDT component provider:
+ * Netty UDT NIO components provider:
  * <p>
- * provides ChannelFactory for UDT channels
+ * provides {@link ChannelFactory} for UDT channels
  * <p>
- * provides SelectorProvider for UDT channels
+ * provides {@link SelectorProvider} for UDT channels
  */
 public class NioUdtProvider implements ChannelFactory {
 

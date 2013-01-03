@@ -13,25 +13,20 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package io.netty.channel.socket.nio;
+package io.netty.transport.udt.nio;
 
-import io.netty.channel.socket.UdtChannel;
-import io.netty.logging.InternalLogger;
-import io.netty.logging.InternalLoggerFactory;
+import io.netty.transport.udt.UdtChannel;
 
 import com.barchart.udt.TypeUDT;
 
 /**
- * Netty Byte Channel Rendezvous for UDT Streams
+ * Netty Message Rendezvous for UDT Datagrams
  */
-public class NioUdtByteRendezvousChannel extends NioUdtByteConnectorChannel
-        implements UdtChannel {
+public class NioUdtMessageRendezvousChannel extends
+        NioUdtMessageConnectorChannel implements UdtChannel {
 
-    protected static final InternalLogger logger = InternalLoggerFactory
-            .getInstance(NioUdtByteRendezvousChannel.class);
-
-    protected NioUdtByteRendezvousChannel() {
-        super(NioUdtProvider.newRendezvousChannelUDT(TypeUDT.STREAM));
+    protected NioUdtMessageRendezvousChannel() {
+        super(NioUdtProvider.newRendezvousChannelUDT(TypeUDT.DATAGRAM));
     }
 
 }

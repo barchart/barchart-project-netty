@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package io.netty.channel.socket.nio;
+package io.netty.transport.udt.nio;
 
 import io.netty.buffer.MessageBuf;
 
@@ -21,12 +21,12 @@ import com.barchart.udt.TypeUDT;
 import com.barchart.udt.nio.SocketChannelUDT;
 
 /**
- * Netty Message Channel Acceptor for UDT Datagrams
+ * Netty Byte Channel Acceptor for UDT Streams
  */
-public class NioUdtMessageAcceptorChannel extends NioUdtBaseAcceptorChannel {
+public class NioUdtByteAcceptorChannel extends NioUdtBaseAcceptorChannel {
 
-    protected NioUdtMessageAcceptorChannel() {
-        super(TypeUDT.DATAGRAM);
+    protected NioUdtByteAcceptorChannel() {
+        super(TypeUDT.STREAM);
     }
 
     @Override
@@ -35,8 +35,8 @@ public class NioUdtMessageAcceptorChannel extends NioUdtBaseAcceptorChannel {
         if (channelUDT == null) {
             return 0;
         } else {
-            buf.add(new NioUdtMessageConnectorChannel(this, channelUDT
-                    .socketUDT().id(), channelUDT));
+            buf.add(new NioUdtByteConnectorChannel(this, channelUDT.socketUDT()
+                    .id(), channelUDT));
             return 1;
         }
     }

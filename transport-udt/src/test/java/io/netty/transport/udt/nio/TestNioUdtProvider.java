@@ -14,7 +14,7 @@
  * under the License.
  */
 
-package io.netty.channel.socket.nio;
+package io.netty.transport.udt.nio;
 
 import static org.junit.Assert.*;
 

@@ -13,17 +13,18 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package io.netty.channel.socket.nio;
+package io.netty.transport.udt.nio;
 
 import io.netty.buffer.BufType;
 import io.netty.buffer.MessageBuf;
 import io.netty.channel.ChannelException;
 import io.netty.channel.ChannelMetadata;
-import io.netty.channel.socket.DefaultUdtChannelConfig;
-import io.netty.channel.socket.UdtChannel;
-import io.netty.channel.socket.UdtChannelConfig;
+import io.netty.channel.socket.nio.AbstractNioMessageChannel;
 import io.netty.logging.InternalLogger;
 import io.netty.logging.InternalLoggerFactory;
+import io.netty.transport.udt.DefaultUdtChannelConfig;
+import io.netty.transport.udt.UdtChannel;
+import io.netty.transport.udt.UdtChannelConfig;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;

@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package io.netty.channel.socket;
+package io.netty.transport.udt;
 
 import static io.netty.channel.ChannelOption.*;
 import io.netty.channel.ChannelOption;
@@ -181,17 +181,13 @@ public class DefaultUdtChannelConfig extends DefaultChannelConfig implements
         validate(option, value);
         if (option == PROTOCOL_RECEIVE_BUFFER_SIZE) {
             setProtocolReceiveBufferSize((Integer) value);
-        }
-        if (option == PROTOCOL_SEND_BUFFER_SIZE) {
+        } else if (option == PROTOCOL_SEND_BUFFER_SIZE) {
             setProtocolSendBufferSize((Integer) value);
-        }
-        if (option == SYSTEM_RECEIVE_BUFFER_SIZE) {
+        } else if (option == SYSTEM_RECEIVE_BUFFER_SIZE) {
             setSystemReceiveBufferSize((Integer) value);
-        }
-        if (option == SYSTEM_SEND_BUFFER_SIZE) {
+        } else if (option == SYSTEM_SEND_BUFFER_SIZE) {
             setSystemSendBufferSize((Integer) value);
-        }
-        if (option == SO_RCVBUF) {
+        } else if (option == SO_RCVBUF) {
             setReceiveBufferSize((Integer) value);
         } else if (option == SO_SNDBUF) {
             setSendBufferSize((Integer) value);

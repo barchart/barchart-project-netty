@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package io.netty.channel.socket;
+package io.netty.transport.udt;
 
 import io.netty.buffer.ByteBuf;
 
