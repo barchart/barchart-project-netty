@@ -80,6 +80,7 @@
     <module>codec-socks</module>
     <module>transport</module>
     <module>transport-sctp</module>
+    <module>transport-udt</module>
     <module>handler</module>
     <module>metrics-yammer</module>
     <module>example</module>
