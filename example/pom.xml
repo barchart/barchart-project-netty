@@ -55,7 +55,6 @@
             <artifactId>netty-codec-socks</artifactId>
             <version>${project.version}</version>
         </dependency>
-
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
@@ -63,6 +62,17 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>netty-metrics-yammer</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- see https://github.com/netty/netty/issues/874 -->
+        <dependency>
+            <groupId>com.yammer.metrics</groupId>
+            <artifactId>metrics-core</artifactId>
+            <version>2.2.0</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>netty-transport-udt</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>
