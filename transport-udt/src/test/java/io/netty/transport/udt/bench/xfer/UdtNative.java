@@ -17,92 +17,63 @@
 package io.netty.transport.udt.bench.xfer;
 
 import static io.netty.transport.udt.util.UnitHelp.*;
-import io.netty.logging.InternalLoggerFactory;
-import io.netty.logging.Slf4JLoggerFactory;
-import io.netty.transport.udt.util.CustomReporter;
+import io.netty.transport.udt.bench.BenchXfer;
+import io.netty.transport.udt.util.CaliperRunner;
 import io.netty.transport.udt.util.TrafficControl;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.barchart.udt.SocketUDT;
 import com.barchart.udt.StatusUDT;
 import com.barchart.udt.TypeUDT;
-import com.google.caliper.SimpleBenchmark;
-import com.yammer.metrics.Metrics;
-import com.yammer.metrics.core.Counter;
-import com.yammer.metrics.core.Meter;
+import com.google.caliper.Param;
 
 /**
- * perform two way native udt socket send/recv
+ * perform two way native UDT socket send/recv
  */
-public final class BenchNative extends SimpleBenchmark {
+public class UdtNative extends BenchXfer {
 
-    private BenchNative() {
+    @Param
+    private volatile int latency;
+
+    protected static List<String> latencyValues() {
+        return BenchXfer.latencyList();
     }
 
-    static final Logger log = LoggerFactory.getLogger(BenchNative.class);
+    @Param
+    private volatile int message;
 
-    /**
-     * use slf4j provider for io.netty.logging.InternalLogger
-     */
-    static {
-        final InternalLoggerFactory defaultFactory = new Slf4JLoggerFactory();
-        InternalLoggerFactory.setDefaultFactory(defaultFactory);
-        log.info("InternalLoggerFactory={}", InternalLoggerFactory
-                .getDefaultFactory().getClass().getName());
+    protected static List<String> messageValues() {
+        return BenchXfer.messageList();
     }
 
-    /** benchmark duration */
-    static final int time = 60 * 1000;
+    @Param
+    private volatile int duration;
 
-    /** transfer chunk size */
-    static final int size = 64 * 1024;
-
-    static final Counter benchTime = Metrics.newCounter(BenchNative.class,
-            "bench time");
-
-    static final Counter benchSize = Metrics.newCounter(BenchNative.class,
-            "bench size");
-
-    static {
-        benchTime.inc(time);
-        benchSize.inc(size);
+    protected static List<String> durationValues() {
+        return BenchXfer.durationList();
     }
 
-    static final Meter rate = Metrics.newMeter(BenchNative.class, "rate",
-            "bytes", TimeUnit.SECONDS);
+    private volatile SocketUDT peer1;
+    private volatile SocketUDT peer2;
 
-    static {
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run() {
-                try {
-                    TrafficControl.delay(0);
-                } catch (final Exception e) {
-                    log.error("", e);
-                }
-            }
-        });
-    }
-
-    public static void main(final String[] args) throws Exception {
-
+    @Override
+    protected void setUp() throws Exception {
         log.info("init");
-        TrafficControl.delay(0);
+
+        TrafficControl.delay(latency);
 
         final InetSocketAddress addr1 = localSocketAddress();
         final InetSocketAddress addr2 = localSocketAddress();
 
-        final SocketUDT peer1 = new SocketUDT(TypeUDT.DATAGRAM);
-        final SocketUDT peer2 = new SocketUDT(TypeUDT.DATAGRAM);
+        peer1 = new SocketUDT(TypeUDT.DATAGRAM);
+        peer2 = new SocketUDT(TypeUDT.DATAGRAM);
 
         peer1.setBlocking(false);
         peer2.setBlocking(false);
@@ -125,6 +96,34 @@ public final class BenchNative extends SimpleBenchmark {
         peer1.setBlocking(true);
         peer2.setBlocking(true);
 
+        super.setUp();
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        super.tearDown();
+
+        peer1.setBlocking(false);
+        peer2.setBlocking(false);
+
+        peer1.close();
+        peer2.close();
+
+        socketAwait(peer1, StatusUDT.CLOSED, StatusUDT.BROKEN);
+        socketAwait(peer2, StatusUDT.CLOSED, StatusUDT.BROKEN);
+
+        TrafficControl.delay(0);
+
+        log.info("done");
+    }
+
+    /** benchmark invocation */
+    public void timeMain(final int reps) throws Exception {
+
+        final int threadCount = 4;
+
+        final CountDownLatch completion = new CountDownLatch(threadCount);
+
         final AtomicBoolean isOn = new AtomicBoolean(true);
 
         final Runnable sendPeer1 = new Runnable() {
@@ -137,25 +136,23 @@ public final class BenchNative extends SimpleBenchmark {
                     }
                 } catch (final Exception e) {
                     log.error("", e);
+                } finally {
+                    completion.countDown();
                 }
             }
 
-            final ByteBuffer buffer = ByteBuffer.allocateDirect(size);
+            final ByteBuffer buffer = ByteBuffer.allocateDirect(message);
 
             long sequence;
 
             void runCore() throws Exception {
-
                 buffer.rewind();
                 buffer.putLong(0, sequence++);
-
                 final int count = peer1.send(buffer);
-
-                if (count != size) {
+                if (count != message) {
                     throw new Exception("count");
                 }
-
-                rate.mark(count);
+                measure().rate().mark(count);
             }
         };
 
@@ -169,24 +166,22 @@ public final class BenchNative extends SimpleBenchmark {
                     }
                 } catch (final Exception e) {
                     log.error("", e);
+                } finally {
+                    completion.countDown();
                 }
             }
 
-            final ByteBuffer buffer = ByteBuffer.allocateDirect(size);
+            final ByteBuffer buffer = ByteBuffer.allocateDirect(message);
 
             long sequence;
 
             void runCore() throws Exception {
-
                 buffer.rewind();
                 buffer.putLong(0, sequence++);
-
                 final int count = peer2.send(buffer);
-
-                if (count != size) {
+                if (count != message) {
                     throw new Exception("count");
                 }
-
             }
         };
 
@@ -200,23 +195,21 @@ public final class BenchNative extends SimpleBenchmark {
                     }
                 } catch (final Exception e) {
                     log.error("", e);
+                } finally {
+                    completion.countDown();
                 }
             }
 
-            final ByteBuffer buffer = ByteBuffer.allocateDirect(size);
+            final ByteBuffer buffer = ByteBuffer.allocateDirect(message);
 
             long sequence;
 
             void runCore() throws Exception {
-
                 buffer.rewind();
-
                 final int count = peer1.receive(buffer);
-
-                if (count != size) {
+                if (count != message) {
                     throw new Exception("count");
                 }
-
                 if (this.sequence++ != buffer.getLong(0)) {
                     throw new Exception("sequence");
                 }
@@ -233,53 +226,45 @@ public final class BenchNative extends SimpleBenchmark {
                     }
                 } catch (final Exception e) {
                     log.error("", e);
+                } finally {
+                    completion.countDown();
                 }
             }
 
-            final ByteBuffer buffer = ByteBuffer.allocateDirect(size);
+            final ByteBuffer buffer = ByteBuffer.allocateDirect(message);
 
             long sequence;
 
             void runCore() throws Exception {
-
                 buffer.rewind();
-
                 final int count = peer2.receive(buffer);
-
-                if (count != size) {
+                if (count != message) {
                     throw new Exception("count");
                 }
-
                 if (this.sequence++ != buffer.getLong(0)) {
                     throw new Exception("sequence");
                 }
             }
         };
 
-        final ExecutorService executor = Executors.newFixedThreadPool(4);
+        final ExecutorService executor = Executors
+                .newFixedThreadPool(threadCount);
 
         executor.submit(recvPeer1);
         executor.submit(recvPeer2);
         executor.submit(sendPeer1);
         executor.submit(sendPeer2);
 
-        CustomReporter.enable(3, TimeUnit.SECONDS);
-
-        Thread.sleep(time);
+        markWait(duration);
 
         isOn.set(false);
 
-        Thread.sleep(1 * 1000);
+        completion.await();
 
         executor.shutdownNow();
-
-        Metrics.defaultRegistry().shutdown();
-
-        peer1.close();
-        peer2.close();
-
-        TrafficControl.delay(0);
-        log.info("done");
     }
 
+    public static void main(final String[] args) throws Exception {
+        CaliperRunner.execute(UdtNative.class);
+    }
 }
